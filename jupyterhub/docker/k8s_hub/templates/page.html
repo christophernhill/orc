@@ -155,6 +155,13 @@
                               </button>
                           </a>
                       </li>
+                      <li>
+                          <a href="/hub/logout" style="display: inline; padding: 0;">
+                              <button class="navbar-toggle navbar-link">
+                                  <b aria-hidden="true" class="visible-xs glyphicon glyphicon-log-out"></b>
+                              </button>
+                          </a>
+                      </li>
                   </ul>
               </div>
           </div>
@@ -175,6 +182,16 @@
                           <span class="top-menu-item hidden-xs">
                               <span aria-hidden="true" class="glyphicon glyphicon-question-sign"></span>
                               About
+                          </span>
+                      </a>
+                  </li>
+              </ul>
+              <ul class="nav navbar-nav pull-left">
+                  <li>
+                      <a href="/hub/logout">
+                          <span class="top-menu-item hidden-xs">
+                              <span aria-hidden="true" class="glyphicon glyphicon-log-out"></span>
+                              Logout
                           </span>
                       </a>
                   </li>
@@ -208,21 +225,10 @@
             <div id="navbar" class="navbar-collapse collapse" style="border-color: #e7e7e7;">
 {#                  <ul class="nav navbar-nav" style="float:none; margin: 0 auto; display: table; table-layout: fixed;">#}
               <ul class="nav navbar-nav">
-                <li><a href="/">Home</a></li>
-                {#<li><a href="{{base_url}}token">Token</a></li>
-                {% if user.admin %}
-                <li><a href="{{base_url}}admin">Admin</a></li>
-                {% endif %}#}
-                <li class="dropdown">
-                  <a href="#" id="navbar-active-a" class="dropdown-toggle gs_active_sub" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Your Server <span class="caret"></span></a>
-                  <ul class="dropdown-menu">
-                    <li><a href="{{base_url}}home">Home</a></li>
-                    <li><a href="{{base_url}}token">Token</a></li>
-                    {% if user.admin %}<li><a href="{{base_url}}admin_orc">Admin</a></li>{% endif %}
-                    <li><a href="{% if user %}{{logout_url}}{% else %}{{login_url}}{% endif %}">{% if user %}Logout{% else %}Login{% endif %}</a></li>
-                  </ul>
-                </li>
-                <li><a href="/binder/">Binder</a></li>
+                <li><a href="{{base_url}}home">Home</a></li>
+                <li><a href="{{base_url}}token">Token</a></li>
+                {% if user.admin %}<li><a href="{{base_url}}admin_orc">Admin</a></li>{% endif %}
+                <li><a href="/services/binder/">Binder</a></li>
               </ul>
             </div>
           </div>

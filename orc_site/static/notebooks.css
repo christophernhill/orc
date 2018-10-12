@@ -226,7 +226,7 @@ footer .container {
 	background-color: #333;
 	}
 
-span.glyphicon.glyphicon-user, span.glyphicon.glyphicon-envelope, span.glyphicon.glyphicon-question-sign {
+span.glyphicon.glyphicon-user, span.glyphicon.glyphicon-envelope, span.glyphicon.glyphicon-question-sign , span.glyphicon.glyphicon-log-out {
 	padding-right: 7px;
 	}
 

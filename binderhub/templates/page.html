@@ -68,21 +68,6 @@
                   </a>
                   <div class="navbar-header pull-right visible-xs hidden-sm hidden-md hidden-lg">
                       <ul class="nav nav-pills pull-left ">
-    {#                              <li class="dropdown" id="ds-language-selection-xs">
-                              <button data-toggle="dropdown" class="dropdown-toggle navbar-toggle navbar-link"
-                                      role="button" href="#" id="language-dropdown-toggle-xs">
-                                  <b aria-hidden="true" class="visible-xs glyphicon glyphicon-globe"></b>
-                              </button>
-                              <ul data-no-collapse="true" aria-labelledby="language-dropdown-toggle-xs" role="menu"
-                                  class="dropdown-menu pull-right">
-                                  <li role="presentation">
-                                      <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=de">Deutsch</a>
-                                  </li>
-                                  <li role="presentation" class="disabled">
-                                      <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=en">English</a>
-                                  </li>
-                              </ul>
-                          </li>#}
                           <li>
                               <a href="mailto:notebooks@gesis.org" style="display: inline; padding: 0;">
                                   <button class="navbar-toggle navbar-link">
@@ -97,28 +82,17 @@
                                   </button>
                               </a>
                           </li>
+                          <li>
+                              <a href="/hub/logout" style="display: inline; padding: 0;">
+                                  <button class="navbar-toggle navbar-link">
+                                      <b aria-hidden="true" class="visible-xs glyphicon glyphicon-log-out"></b>
+                                  </button>
+                              </a>
+                          </li>
                       </ul>
                   </div>
               </div>
               <div class="navbar-header pull-right hidden-xs">
-    {#                      <ul class="nav navbar-nav pull-left">
-                      <li class="dropdown" id="ds-language-selection">
-                          <a data-toggle="dropdown" class="dropdown-toggle" role="button" href="#"
-                             id="language-dropdown-toggle">
-                              <span aria-hidden="true" class="glyphicon glyphicon-globe"></span>
-                              <span class="hidden-xs">English&nbsp;<b class="caret"></b></span>
-                          </a>
-                          <ul data-no-collapse="true" aria-labelledby="language-dropdown-toggle" role="menu"
-                              class="dropdown-menu pull-right">
-                              <li role="presentation">
-                                  <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=de">Deutsch</a>
-                              </li>
-                              <li role="presentation" class="disabled">
-                                  <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=en">English</a>
-                              </li>
-                          </ul>
-                      </li>
-                  </ul>#}
                   <ul class="nav navbar-nav pull-left">
                       <li>
                           <a href="mailto:notebooks@gesis.org">
@@ -136,6 +110,16 @@
                               <span class="top-menu-item hidden-xs">
                                   <span aria-hidden="true" class="glyphicon glyphicon-question-sign"></span>
                                   About
+                              </span>
+                          </a>
+                      </li>
+                  </ul>
+                  <ul class="nav navbar-nav pull-left">
+                      <li>
+                          <a href="/hub/logout">
+                              <span class="top-menu-item hidden-xs">
+                                  <span aria-hidden="true" class="glyphicon glyphicon-log-out"></span>
+                                  Logout
                               </span>
                           </a>
                       </li>
@@ -169,10 +153,9 @@
                 <div id="navbar" class="navbar-collapse collapse" style="border-color: #e7e7e7;">
 {#                  <ul class="nav navbar-nav" style="float:none; margin: 0 auto; display: table; table-layout: fixed;">#}
                   <ul class="nav navbar-nav">
-                    <li><a href="/">Home</a></li>
-{#                    <li><a href="https://notebooks{% if is_staging %}-test{% endif %}.gesis.org/Shibboleth.sso/Login?SAMLDS=1&target=https://notebooks{% if is_staging %}-test{% endif %}.gesis.org/jupyter/hub/login&entityID=https%3A%2F%2Fidp.gesis.org%2Fidp%2Fshibboleth">Your Server</a></li>#}
-                    <li><a href="/jupyter/">Your Server</a></li>
-                    <li><a href="/binder/" id="navbar-active-a" class="gs_active_sub">Binder</a></li>
+                    <li><a href="/hub/">Home</a></li>
+                    <li><a href="/hub/token">Token</a></li>
+                    <li><a href="/services/binder/" id="navbar-active-a" class="gs_active_sub">Binder</a></li>
                   </ul>
                 </div>
               </div>

@@ -31,10 +31,10 @@ service:
   type: NodePort
   nodePort: 30181
 
-baseUrl: /binder/
+baseUrl: /services/binder/
 
 hub:
-  url: https://notebooks-test.gesis.org/binder/jupyter/
+  url: https://notebooks-test.gesis.org
 
 template:
   variables:
@@ -51,7 +51,7 @@ initContainers:
     args:
       - clone
       - --single-branch
-      - --branch=staging
+      - --branch=jbhub
       - --depth=1
       - --
       - https://github.com/gesiscss/orc.git
@@ -74,7 +74,7 @@ build:
   nodeSelector:
     user: workers
   repo2dockerImage: jupyter/repo2docker:a161b09
-  # to give custom "Binder inaccessible" message (login.html)
+  #    TODO assign repo name to REPO_NAME env variable - this can be used in post_start hook of pod
   appendix: |
     USER root
     ENV BINDER_URL={binder_url}
@@ -85,6 +85,9 @@ build:
      && ./appendix/run-appendix \
      && rm -rf orc.tar.gz appendix
     USER $NB_USER
+    # TODO appendix is not applied to custom docker. and also force installing jhub changes versions of some dependencies
+    # We must inform/warn users about this and force install it
+    #RUN conda install -n root --quiet --yes -c conda-forge 'jupyterhub=0.9.4' && conda clean -tipsy
 
 jupyterhub:
   custom:
@@ -92,7 +95,6 @@ jupyterhub:
   debug:
     enabled: true
   hub:
-    baseUrl: /binder/jupyter/
     nodeSelector:
       staging: worker
     annotations:
@@ -101,6 +103,9 @@ jupyterhub:
       type: RollingUpdate
     db:
       type: postgres
+    image:
+      name: gesiscss/binder-fork
+      tag: "jh-auth-5"
     resources:
       requests:
         cpu: "0.25"
@@ -108,7 +113,195 @@ jupyterhub:
       limits:
         cpu: "0.5"
         memory: 512Mi
+    services:
+      binder:
+        url: http://194.95.75.9:30181
+        oauth_client_id: "binder-oauth-client-test"
+    allowNamedServers: false
     extraConfig:
+      binder: |
+        c.JupyterHub.redirect_to_server = False
+        c.JupyterHub.bind_url = 'https://notebooks-test.gesis.org/'
+        c.JupyterHub.template_paths = ['/srv/jhub_custom_templates']
+        c.JupyterHub.template_vars = {'is_staging': True, 'is_production': False}
+        c.Authenticator.shibboleth_logout_url = 'https://notebooks-test.gesis.org/Shibboleth.sso/Logout?return=https://notebooks-test.gesis.org/'
+        # c.KubeSpawner.pod_name_template = 'jupyter-{username}{servername}'
+        # c.KubeSpawner.pod_name_template = 'jupyter-{userid}{servername}'
+
+        from kubespawner import KubeSpawner
+        class BinderSpawner(KubeSpawner):
+          _default_images = ('gesiscss/singleuser-orc:da40ea79', 'jupyter/base-notebook:177037d09156', )
+          def start(self):
+              # FIXME: ? user can pass any image through API (without using binder)
+              if 'image' in self.user_options:
+                # binder service sets the image spec via user options
+                self.image_spec = self.user_options['image']
+                setattr(self, 'repo_url', self.user_options.get('repo_url', ''))
+                #self.storage_pvc_ensure = False
+                #self.volumes = []
+                #self.volume_mounts = []
+              return super().start()
+          def get_state(self):
+            state = super().get_state()
+            if self.orm_spawner.state:
+              state['images'] = self.orm_spawner.state.get('images', {})
+            else:
+              state['images'] = {}
+            if self.image_spec not in state['images'] and self.image_spec not in self._default_images:
+              state['images'][self.image_spec] = (len(state['images'])+len(self._default_images),
+                                                  getattr(self, 'repo_url', ''))
+            state['images_count'] = len(state['images'])  # hack to save changes in JSONDict field
+            return state
+        c.JupyterHub.spawner_class = BinderSpawner
+
+        from tornado import gen
+        @gen.coroutine
+        def get_profile_list(spawner):
+            volume_name_template = 'volume-{username}{servername}'
+            pvc_name_template = 'claim-{username}{servername}'
+            mount_path = '/home/jovyan'
+            volumes = [{'name': volume_name_template,
+                        'persistentVolumeClaim': {
+                            'claimName': pvc_name_template}}]
+            volume_mounts = [{'mountPath': mount_path,
+                              'name': volume_name_template}]
+            mount_path_bi = '/home/jovyan/persistent_storage'
+            volume_mounts_bi = [{'mountPath': mount_path_bi,
+                                 'name': volume_name_template}]
+
+            #auth_state = yield spawner.user.get_auth_state()
+            images = {}
+            # launched images
+            #for name, orm_spawner in spawner.user.orm_spawners.items():
+              #if orm_spawner.state is None:
+                #continue
+            if spawner.orm_spawner.state is not None:
+              for image_spec, (_order, repo_url) in spawner.orm_spawner.state.get('images', {}).items():
+                image = {
+                          '_order': _order,
+                          'display_name': image_spec,
+                          'description': repo_url,
+                          'image': image_spec,
+                          'kubespawner_override':
+                            {
+                              'image_spec': image_spec,
+                              'storage_pvc_ensure': True,
+                              'volumes': volumes,
+                              'volume_mounts': volume_mounts_bi,
+                              'lifecycle_hooks': {},
+                            }
+                        }
+                images.update({image_spec: image})
+            # default images with default values
+            images.update(
+              {
+                'gesiscss/singleuser-orc:da40ea79':
+                  {
+                    '_order': 0,
+                    'display_name': 'gesiscss/singleuser-orc:da40ea79',
+                    'description': 'GESIS data science',
+                    'default': True,
+                    'image': 'gesiscss/singleuser-orc:da40ea79',
+                    'kubespawner_override':
+                      {
+                        'image_spec': 'gesiscss/singleuser-orc:da40ea79',
+                        'storage_pvc_ensure': True,
+                        'volumes': volumes,
+                        'volume_mounts': volume_mounts,
+                        'lifecycle_hooks': {},
+                        'cpu_guarantee': 0.2,
+                        'cpu_limit': 2,
+                        'mem_guarantee': '2G',
+                        'mem_limit': '4G',
+                      }
+                  },
+                'jupyter/base-notebook:177037d09156':
+                  {
+                    '_order': 1,
+                    'display_name': 'jupyter/base-notebook:177037d09156',
+                    'description': 'Base Notebook',
+                    'image': 'jupyter/base-notebook:177037d09156',
+                    'kubespawner_override':
+                      {
+                        'image_spec': 'jupyter/base-notebook:177037d09156',
+                        'storage_pvc_ensure': True,
+                        'volumes': volumes,
+                        'volume_mounts': volume_mounts,
+                        'lifecycle_hooks': {},
+                      }
+                  },
+              })
+            images = sorted([images[image_spec] for image_spec in images], key=lambda x:x['_order'])
+            return images
+        c.KubeSpawner.profile_list = get_profile_list
+
+        from jupyterhub.handlers.base import BaseHandler
+        from jupyterhub.utils import admin_only
+        from jupyterhub import orm
+        class OrcAdminHandler(BaseHandler):
+          """Render the admin page."""
+          @admin_only
+          async def get(self):
+              available = {'name', 'admin', 'running', 'last_activity'}
+              default_sort = ['last_activity']
+              mapping = {
+                  'running': orm.Spawner.server_id,
+              }
+              for name in available:
+                  if name not in mapping:
+                      mapping[name] = getattr(orm.User, name)
+
+              default_order = {
+                  'name': 'asc',
+                  'last_activity': 'desc',
+                  'admin': 'desc',
+                  'running': 'desc',
+              }
+
+              sorts = self.get_arguments('sort') or default_sort
+              orders = self.get_arguments('order')
+
+              for bad in set(sorts).difference(available):
+                  self.log.warning("ignoring invalid sort: %r", bad)
+                  sorts.remove(bad)
+              for bad in set(orders).difference({'asc', 'desc'}):
+                  self.log.warning("ignoring invalid order: %r", bad)
+                  orders.remove(bad)
+
+              # add default sort as secondary
+              for s in default_sort:
+                  if s not in sorts:
+                      sorts.append(s)
+              if len(orders) < len(sorts):
+                  for col in sorts[len(orders):]:
+                      orders.append(default_order[col])
+              else:
+                  orders = orders[:len(sorts)]
+
+              # this could be one incomprehensible nested list comprehension
+              # get User columns
+              cols = [ mapping[c] for c in sorts ]
+              # get User.col.desc() order objects
+              ordered = [ getattr(c, o)() for c, o in zip(cols, orders) ]
+
+              users = self.db.query(orm.User).outerjoin(orm.Spawner).order_by(*ordered)
+              users = [ self._user_from_orm(u) for u in users ]
+              running = [ u for u in users if u.running ]
+              for user in users:
+                  auth_state = await user.get_auth_state()
+                  auth_state = auth_state or {}
+                  setattr(user, 'gn', auth_state.get('Givenname', ''))
+                  setattr(user, 'sn', auth_state.get('sn', ''))
+
+              html = self.render_template('admin.html',
+                  user=self.get_current_user(),
+                  admin_access=self.settings.get('admin_access', False),
+                  users=users,
+                  running=running,
+                  sort={s:o for s,o in zip(sorts, orders)},
+              )
+              self.finish(html)
+        c.JupyterHub.extra_handlers = [(r'/admin_orc', OrcAdminHandler),]
       neverRestart: |
         c.KubeSpawner.extra_pod_config.update({'restart_policy': 'Never'})
 
@@ -120,7 +313,7 @@ jupyterhub:
     service:
       type: NodePort
       nodePorts:
-        http: 30182
+        http: 30180
     chp:
       resources:
         requests:
@@ -130,7 +323,25 @@ jupyterhub:
           cpu: "0.5"
           memory: 512Mi
 
+  auth:
+    type: custom
+    custom:
+      className: "jhub_shibboleth_auth.shibboleth_auth.ShibbolethAuthenticator"
+    admin:
+      access: true
+      users: ['kenan.erdogan@gesis.org', 'arnim.bleier@gesis.org']
+    state:
+      enabled: true
+
   singleuser:
+    cmd: jupyterhub-singleuser
+    storage:
+      type: dynamic
+      dynamic:
+        pvcNameTemplate: claim-{username}{servername}
+        volumeNameTemplate: volume-{username}{servername}
+      capacity: 15Gi
+      homeMountPath: /home/jovyan/persistent_storage
     cpu:
       guarantee: 0.1
       limit: 0.5
@@ -139,12 +350,22 @@ jupyterhub:
       limit: 512M
     nodeSelector:
       user: workers
+    extraEnv:
+      IS_STAGING: 'true'
+      IS_PRODUCTION: 'false'
+
+  prePuller:
+    hook:
+      enabled: false
+    continuous:
+      enabled: false
 
   cull:
+    users: false
     # cull every 11 minutes so it is out of phase
     # with the proxy check-routes interval of five minutes
-    every: 660
-    timeout: 600
+    every: 90
+    timeout: 60
     # maxAge is 6 hours: 6 * 3600 = 21600
     maxAge: 21600
 

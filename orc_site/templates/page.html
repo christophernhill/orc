@@ -66,21 +66,6 @@
                   </a>
                   <div class="navbar-header pull-right visible-xs hidden-sm hidden-md hidden-lg">
                       <ul class="nav nav-pills pull-left ">
-    {#                              <li class="dropdown" id="ds-language-selection-xs">
-                              <button data-toggle="dropdown" class="dropdown-toggle navbar-toggle navbar-link"
-                                      role="button" href="#" id="language-dropdown-toggle-xs">
-                                  <b aria-hidden="true" class="visible-xs glyphicon glyphicon-globe"></b>
-                              </button>
-                              <ul data-no-collapse="true" aria-labelledby="language-dropdown-toggle-xs" role="menu"
-                                  class="dropdown-menu pull-right">
-                                  <li role="presentation">
-                                      <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=de">Deutsch</a>
-                                  </li>
-                                  <li role="presentation" class="disabled">
-                                      <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=en">English</a>
-                                  </li>
-                              </ul>
-                          </li>#}
                           <li>
                               <a href="{{contact_url}}" style="display: inline; padding: 0;">
                                   <button class="navbar-toggle navbar-link">
@@ -95,28 +80,19 @@
                                   </button>
                               </a>
                           </li>
+                          {% if not login_required %}
+                          <li>
+                              <a href="{{logout_url}}" style="display: inline; padding: 0;">
+                                  <button class="navbar-toggle navbar-link">
+                                      <b aria-hidden="true" class="visible-xs glyphicon glyphicon-log-out"></b>
+                                  </button>
+                              </a>
+                          </li>
+                          {% endif %}
                       </ul>
                   </div>
               </div>
               <div class="navbar-header pull-right hidden-xs">
-    {#                      <ul class="nav navbar-nav pull-left">
-                      <li class="dropdown" id="ds-language-selection">
-                          <a data-toggle="dropdown" class="dropdown-toggle" role="button" href="#"
-                             id="language-dropdown-toggle">
-                              <span aria-hidden="true" class="glyphicon glyphicon-globe"></span>
-                              <span class="hidden-xs">English&nbsp;<b class="caret"></b></span>
-                          </a>
-                          <ul data-no-collapse="true" aria-labelledby="language-dropdown-toggle" role="menu"
-                              class="dropdown-menu pull-right">
-                              <li role="presentation">
-                                  <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=de">Deutsch</a>
-                              </li>
-                              <li role="presentation" class="disabled">
-                                  <a href="http://www.ssoar.info:80/ssoar/?locale-attribute=en">English</a>
-                              </li>
-                          </ul>
-                      </li>
-                  </ul>#}
                   <ul class="nav navbar-nav pull-left">
                       <li>
                           <a href="{{contact_url}}">
@@ -138,6 +114,18 @@
                           </a>
                       </li>
                   </ul>
+                  {% if not login_required %}
+                  <ul class="nav navbar-nav pull-left">
+                      <li>
+                          <a href="{{logout_url}}">
+                              <span class="top-menu-item hidden-xs">
+                                  <span aria-hidden="true" class="glyphicon glyphicon-log-out"></span>
+                                  Logout
+                              </span>
+                          </a>
+                      </li>
+                  </ul>
+                  {% endif %}
               </div>
     {#                  <div id="header_banner" class="col-xs-12 hidden-xs hidden-sm">#}
               <div id="header_banner">
@@ -153,6 +141,7 @@
     {% endblock header %}
 
     <div id="main-container" class="container">
+        {% if not login_required %}
         <div class="row">
             <nav class="navbar navbar-default">
               <div class="container-fluid" style="padding: 0;">
@@ -167,14 +156,15 @@
                 <div id="navbar" class="navbar-collapse collapse">
 {#                  <ul class="nav navbar-nav" style="float:none; margin: 0 auto; display: table; table-layout: fixed;">#}
                   <ul class="nav navbar-nav">
-                    <li><a href="{{home_url}}" {% if active == 'home' %}id="navbar-active-a"{% endif %} {% if active == 'home' %}class="gs_active_sub"{% endif %}>Home</a></li>
-                    <li><a href="{{jhub_url}}" {% if active == 'login' %}id="navbar-active-a"{% endif %} {% if active == 'login' %}class="gs_active_sub"{% endif %}>Your Server</a></li>
-                    <li><a href="{{bhub_url}}" {% if active == 'binder' %}id="navbar-active-a"{% endif %} {% if active == 'binder' %}class="gs_active_sub"{% endif %}>Binder</a></li>
+                    <li><a href="{{jhub_url}}home">Home</a></li>
+                    <li><a href="{{jhub_url}}token">Token</a></li>
+                    <li><a href="{{bhub_url}}">Binder</a></li>
                   </ul>
                 </div>
               </div>
             </nav>
         </div>
+        {% endif %}
         {% block headline %}
         {% endblock headline %}
 
