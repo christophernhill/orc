@@ -15,7 +15,7 @@ def quota():
     nfs_projects_path = f'{nfs_dir}/projects'
     print(f'{datetime.utcnow()} [UTC]: {nfs_projects_path} is changed')
     # projects file of quota.py
-    projects_path = '/home/iuser/nfs/projects'
+    projects_path = '/home/iuser/xfs_nfs/projects'
 
     with open(nfs_projects_path, 'r') as f1, \
          open(projects_path, 'r+') as f2:
