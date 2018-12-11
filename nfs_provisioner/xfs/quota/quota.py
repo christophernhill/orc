@@ -39,11 +39,11 @@ def quota():
             project_folder = basename(project_path)
             project_path = join(nfs_dir, project_folder)
             # add new project to xfs quota
-            cp = run(f"xfs_quota -x -c 'project -s -p {project_path} {project_id}' f'{xfs_dir}",
+            cp = run(f"xfs_quota -x -c 'project -s -p {project_path} {project_id}' {xfs_dir}",
                      shell=True, stdout=PIPE, stderr=PIPE)
             print('{} - {} - {} - {}'.format(cp.args, cp.returncode, cp.stdout, cp.stderr))
             # set hard limit for this project
-            cp = run(f"xfs_quota -x -c 'limit -p bhard={hard_limit} {project_id}' f'{xfs_dir}",
+            cp = run(f"xfs_quota -x -c 'limit -p bhard={hard_limit} {project_id}' {xfs_dir}",
                      shell=True, stdout=PIPE, stderr=PIPE)
             print('{} - {} - {} - {}'.format(cp.args, cp.returncode, cp.stdout, cp.stderr))
             projects.add(a)
