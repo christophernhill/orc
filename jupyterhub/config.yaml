@@ -87,7 +87,6 @@ hub:
                 sort={s:o for s,o in zip(sorts, orders)},
             )
             self.finish(html)
-
       c.JupyterHub.extra_handlers = [(r'/admin_orc', OrcAdminHandler),]
   resources:
     requests:
@@ -131,6 +130,8 @@ singleuser:
   storage:
     # has no effect when using nfs: this is a min limit not a max
     capacity: 15Gi
+    dynamic:
+      storageClass: nfs-xfs-sc
   image:
     name: gesiscss/singleuser-orc
     tag: "r2d-10858008"
@@ -154,4 +155,3 @@ cull:
   # kill user pods if idle for 30 mins - default is 1 hour
   timeout: 1800
   every: 660
-

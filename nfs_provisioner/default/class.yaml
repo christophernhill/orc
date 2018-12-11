@@ -8,5 +8,7 @@ provisioner: orc.external/nfs
 reclaimPolicy: Delete
 mountOptions:
   - vers=4.1
-#parameters:
-#  gid: 100  # TODO same as NB_GID, but there are prometheus and grafana volumes
+parameters:
+  # same as NB_GID (100 for users group) in https://github.com/jupyter/docker-stacks/blob/master/base-notebook/Dockerfile
+  # in binder images there is jovyan group (1000) and users group (100)
+  gid: "100"

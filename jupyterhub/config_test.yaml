@@ -131,6 +131,8 @@ singleuser:
     user: workers
   storage:
     capacity: 15Gi
+    dynamic:
+      storageClass: nfs-xfs-sc
   image:
     name: gesiscss/singleuser-orc
     tag: "r2d-10858008"

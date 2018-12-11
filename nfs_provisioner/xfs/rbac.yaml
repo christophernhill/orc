@@ -1,7 +1,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: nfs-provisioner-runner
+  name: xfs-nfs-provisioner-runner
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -20,27 +20,27 @@ rules:
     verbs: ["get"]
   - apiGroups: ["extensions"]
     resources: ["podsecuritypolicies"]
-    resourceNames: ["nfs-provisioner"]
+    resourceNames: ["xfs-nfs-provisioner"]
     verbs: ["use"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: run-nfs-provisioner
+  name: run-xfs-nfs-provisioner
 subjects:
   - kind: ServiceAccount
-    name: nfs-provisioner
+    name: xfs-nfs-provisioner
      # replace with namespace where provisioner is deployed
-    namespace: default
+    namespace: nfs-ns
 roleRef:
   kind: ClusterRole
-  name: nfs-provisioner-runner
+  name: xfs-nfs-provisioner-runner
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: leader-locking-nfs-provisioner
+  name: leader-locking-xfs-nfs-provisioner
 rules:
   - apiGroups: [""]
     resources: ["endpoints"]
@@ -49,13 +49,13 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: leader-locking-nfs-provisioner
+  name: leader-locking-xfs-nfs-provisioner
 subjects:
   - kind: ServiceAccount
-    name: nfs-provisioner
+    name: xfs-nfs-provisioner
     # replace with namespace where provisioner is deployed
-    namespace: default
+    namespace: nfs-ns
 roleRef:
   kind: Role
-  name: leader-locking-nfs-provisioner
+  name: leader-locking-xfs-nfs-provisioner
   apiGroup: rbac.authorization.k8s.io
