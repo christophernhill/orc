@@ -132,7 +132,7 @@ singleuser:
   storage:
     capacity: 15Gi
     dynamic:
-      storageClass: nfs-xfs-sc
+      storageClass: xfs-nfs-sc
   image:
     name: gesiscss/singleuser-orc
     tag: "r2d-10858008"
