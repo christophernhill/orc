@@ -2,7 +2,6 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: nfs-backup
-  namespace: nfs-ns
 spec:
   # At 02:00 in UTC => at 04:00.
   schedule: "0 2 * * *"
