@@ -1,137 +1,273 @@
-debug:
-  enabled: true
+# TODO dev -> staging
+nodeSelector:
+  staging: worker
 
-hub:
-  baseUrl: /jupyter/
-  nodeSelector:
-    staging: worker
+config:
+  BinderHub:
+    debug: true
+    base_url: /jupyter/services/binder/
+    hub_url: https://notebooks-test.gesis.org
+
+    use_registry: true
+    image_prefix: gesiscss/orc-jhub-binder-staging-
+    build_image: jupyter/repo2docker:9f081a2
+    per_repo_quota: 100
+    build_node_selector:
+      build: workers
+    appendix: |
+      USER root
+      ENV BINDER_URL={binder_url}
+      ENV REPO_URL={repo_url}
+      RUN cd /tmp \
+       && wget -q https://github.com/gesiscss/orc/archive/dev.tar.gz -O orc.tar.gz \
+       && tar --wildcards -xzf orc.tar.gz --strip 2 */jupyterhub/appendix\
+       && ./appendix/run-appendix \
+       && rm -rf orc.tar.gz appendix
+      USER $NB_USER
+      # for jupyterlab-hub that hub tab appears in menu
+      # https://github.com/jupyterhub/jupyterlab-hub#setup-user-environment
+      RUN echo '{"hub_prefix": "/jupyter"}' >> /opt/conda/share/jupyter/lab/settings/page_config.json
+
+    template_path: /etc/binderhub/templates/binderhub/templates
+    #extra_static_path: /etc/binderhub/templates/binderhub/static
+    #extra_static_url_prefix: extra_static/
+
+    auth_enabled: true
+
+  GitHubRepoProvider:
+    # Add banned repositories to the list below
+    # They should be strings that will match "^<org-name>/<repo-name>.*"
+    banned_specs:
+      # e.g. '^org/repo.*'
+      - ^ines/spacy-binder.*
+      - ^soft4voip/rak.*
+
+extraConfig:
+  templates: |
+    staging = True
+    production = False
+    site_url = 'https://notebooks{}.gesis.org'.format('-test' if staging else '')
+    context = {
+        'staging': staging,
+        'production': production,
+        'version': 'beta',
+        # 'shibboleth_entityID': f'{site_url}/shibboleth',
+        'home_url': '/',
+        'jhub_url': '/jupyter/',
+        'gesis_login_url': f'{site_url}/Shibboleth.sso/Login?SAMLDS=1&'
+                           f'target={site_url}/hub/login&'
+                           f'entityID=https%3A%2F%2Fidp.gesis.org%2Fidp%2Fshibboleth',
+        'bhub_url': '/binder/',
+        'about_url': '/about/',
+        'tou_url': '/terms_of_use/',
+        'imprint_url': 'https://www.gesis.org/en/institute/imprint/',
+        'data_protection_url': 'https://www.gesis.org/en/institute/data-protection/',
+        'gesis_url': 'https://www.gesis.org/en/home/',
+        'gallery_url': '/gallery/'
+        # 'help_url': 'https://www.gesis.org/en/help/',
+    }
+    context.update({'user': True})
+    c.BinderHub.template_variables = context
+
+resources:
+  requests:
+    cpu: "0.25"
+    memory: 512Mi
+  limits:
+    cpu: "0.5"
+    memory: 512Mi
+
+service:
   annotations:
     prometheus.io/scrape: 'false'
-  image:
-    name: gesiscss/k8s-hub-orc
-    tag: "9696a2f8"
-  deploymentStrategy:
-    type: RollingUpdate
-  db:
-    type: postgres
-  extraConfig:
-    orc: |
-      c.Authenticator.shibboleth_logout_url = 'https://notebooks-test.gesis.org/Shibboleth.sso/Logout?return=https://notebooks-test.gesis.org/'
-      c.JupyterHub.redirect_to_server = False
-      c.JupyterHub.bind_url = 'https://notebooks-test.gesis.org/jupyter/'
-    templates: |
-      c.JupyterHub.template_paths = ['/srv/jhub_custom_templates']
-      staging = True
-      production = False
-      site_url = 'https://notebooks{}.gesis.org'.format('-test' if staging else '')
-      context = {
-          'staging': staging,
-          'production': production,
-          'version': 'beta',
-          # 'shibboleth_entityID': f'{site_url}/shibboleth',
+  type: NodePort
+  nodePort: 30183
 
-          'home_url': '/',
-          'jhub_url': '/jupyter/',
-          # 'logout_url': '/jupyter/hub/logout',
-          'gesis_login_url': f'{site_url}/Shibboleth.sso/Login?SAMLDS=1&'
-                             f'target={site_url}/hub/login&'
-                             f'entityID=https%3A%2F%2Fidp.gesis.org%2Fidp%2Fshibboleth',
-          'bhub_url': '/binder/',
-          'about_url': '/about/',
-          'tou_url': '/terms_of_use/',
-          'imprint_url': 'https://www.gesis.org/en/institute/imprint/',
-          'data_protection_url': 'https://www.gesis.org/en/institute/data-protection/',
-          'gesis_url': 'https://www.gesis.org/en/home/',
-          'gallery_url': '/gallery/'
-          # 'help_url': 'https://www.gesis.org/en/help/',
-      }
-      c.JupyterHub.template_vars = context
-    admin_handler: |
-      from jupyterhub.handlers.base import BaseHandler
-      from jupyterhub.utils import admin_only
-      from jupyterhub import orm
-      class OrcAdminHandler(BaseHandler):
-        """Render the admin page."""
-        @admin_only
-        async def get(self):
-            available = {'name', 'admin', 'running', 'last_activity'}
-            default_sort = ['last_activity']
-            mapping = {
-                'running': orm.Spawner.server_id,
-            }
-            for name in available:
-                if name not in mapping:
-                    mapping[name] = getattr(orm.User, name)
+dind:
+  enabled: false
 
-            default_order = {
-                'name': 'asc',
-                'last_activity': 'desc',
-                'admin': 'desc',
-                'running': 'desc',
-            }
+imageCleaner:
+  enabled: false
 
-            sorts = self.get_arguments('sort') or default_sort
-            orders = self.get_arguments('order')
+initContainers:
+  - name: git-clone-templates
+    image: alpine/git
+    args:
+      - clone
+      - --single-branch
+      - --branch=dev
+      - --depth=1
+      - --
+      - https://github.com/gesiscss/orc.git
+      - /etc/binderhub/templates
+    securityContext:
+      runAsUser: 0
+    volumeMounts:
+      - name: custom-templates
+        mountPath: /etc/binderhub/templates
+extraVolumes:
+  - name: custom-templates
+    emptyDir: {}
+extraVolumeMounts:
+  - name: custom-templates
+    mountPath: /etc/binderhub/templates
 
-            for bad in set(sorts).difference(available):
-                self.log.warning("ignoring invalid sort: %r", bad)
-                sorts.remove(bad)
-            for bad in set(orders).difference({'asc', 'desc'}):
-                self.log.warning("ignoring invalid order: %r", bad)
-                orders.remove(bad)
+cors: &cors
+  allowOrigin: "*"
 
-            # add default sort as secondary
-            for s in default_sort:
-                if s not in sorts:
-                    sorts.append(s)
-            if len(orders) < len(sorts):
-                for col in sorts[len(orders):]:
-                    orders.append(default_order[col])
-            else:
-                orders = orders[:len(sorts)]
+jupyterhub:
+  custom:
+    cors: *cors
+  debug:
+    enabled: true
 
-            # this could be one incomprehensible nested list comprehension
-            # get User columns
-            cols = [ mapping[c] for c in sorts ]
-            # get User.col.desc() order objects
-            ordered = [ getattr(c, o)() for c, o in zip(cols, orders) ]
+  hub:
+    baseUrl: /jupyter/
+    nodeSelector:
+      staging: worker
+    annotations:
+      prometheus.io/scrape: 'false'
+    image:
+      name: gesiscss/k8s-hub-orc
+      tag: "9696a2f8"
+    deploymentStrategy:
+      type: RollingUpdate
+    db:
+      type: postgres
+    services:
+      binder:
+        url: http://194.95.75.10:30183
+        oauth_client_id: "binder-oauth-client-staging"
+    extraConfig:
+      orc: |
+        c.Authenticator.shibboleth_logout_url = 'https://notebooks-test.gesis.org/Shibboleth.sso/Logout?return=https://notebooks-test.gesis.org/'
+        c.JupyterHub.redirect_to_server = False
+        c.JupyterHub.bind_url = 'https://notebooks-test.gesis.org/jupyter/'
+      templates: |
+        c.JupyterHub.template_paths = ['/srv/jhub_custom_templates']
+        staging = True
+        production = False
+        site_url = 'https://notebooks{}.gesis.org'.format('-test' if staging else '')
+        context = {
+            'staging': staging,
+            'production': production,
+            'version': 'beta',
+            # 'shibboleth_entityID': f'{site_url}/shibboleth',
 
-            users = self.db.query(orm.User).outerjoin(orm.Spawner).order_by(*ordered)
-            users = [ self._user_from_orm(u) for u in users ]
-            running = [ u for u in users if u.running ]
-            for user in users:
-                auth_state = await user.get_auth_state()
-                auth_state = auth_state or {}
-                setattr(user, 'gn', auth_state.get('Givenname', ''))
-                setattr(user, 'sn', auth_state.get('sn', ''))
+            'home_url': '/',
+            'jhub_url': '/jupyter/',
+            # 'logout_url': '/jupyter/hub/logout',
+            'gesis_login_url': f'{site_url}/Shibboleth.sso/Login?SAMLDS=1&'
+                               f'target={site_url}/hub/login&'
+                               f'entityID=https%3A%2F%2Fidp.gesis.org%2Fidp%2Fshibboleth',
+            'bhub_url': '/binder/',
+            'about_url': '/about/',
+            'tou_url': '/terms_of_use/',
+            'imprint_url': 'https://www.gesis.org/en/institute/imprint/',
+            'data_protection_url': 'https://www.gesis.org/en/institute/data-protection/',
+            'gesis_url': 'https://www.gesis.org/en/home/',
+            'gallery_url': '/gallery/'
+            # 'help_url': 'https://www.gesis.org/en/help/',
+        }
+        c.JupyterHub.template_vars = context
+      admin_handler: |
+        from jupyterhub.handlers.base import BaseHandler
+        from jupyterhub.utils import admin_only
+        from jupyterhub import orm
+        class OrcAdminHandler(BaseHandler):
+          """Render the admin page."""
+          @admin_only
+          async def get(self):
+              available = {'name', 'admin', 'running', 'last_activity'}
+              default_sort = ['last_activity']
+              mapping = {
+                  'running': orm.Spawner.server_id,
+              }
+              for name in available:
+                  if name not in mapping:
+                      mapping[name] = getattr(orm.User, name)
 
-            html = self.render_template('admin.html',
-                user=self.get_current_user(),
-                admin_access=self.settings.get('admin_access', False),
-                users=users,
-                running=running,
-                sort={s:o for s,o in zip(sorts, orders)},
-            )
-            self.finish(html)
-      c.JupyterHub.extra_handlers = [(r'/admin_orc', OrcAdminHandler),]
-  resources:
-    requests:
-      cpu: "0.25"
-      memory: 512Mi
-    limits:
-      cpu: "0.5"
-      memory: 512Mi
+              default_order = {
+                  'name': 'asc',
+                  'last_activity': 'desc',
+                  'admin': 'desc',
+                  'running': 'desc',
+              }
 
-proxy:
-  nodeSelector:
-    staging: worker
-  https:
-    enabled: false
-  service:
-    type: NodePort
-    nodePorts:
-      http: 30180
-  chp:
+              sorts = self.get_arguments('sort') or default_sort
+              orders = self.get_arguments('order')
+
+              for bad in set(sorts).difference(available):
+                  self.log.warning("ignoring invalid sort: %r", bad)
+                  sorts.remove(bad)
+              for bad in set(orders).difference({'asc', 'desc'}):
+                  self.log.warning("ignoring invalid order: %r", bad)
+                  orders.remove(bad)
+
+              # add default sort as secondary
+              for s in default_sort:
+                  if s not in sorts:
+                      sorts.append(s)
+              if len(orders) < len(sorts):
+                  for col in sorts[len(orders):]:
+                      orders.append(default_order[col])
+              else:
+                  orders = orders[:len(sorts)]
+
+              # this could be one incomprehensible nested list comprehension
+              # get User columns
+              cols = [ mapping[c] for c in sorts ]
+              # get User.col.desc() order objects
+              ordered = [ getattr(c, o)() for c, o in zip(cols, orders) ]
+
+              users = self.db.query(orm.User).outerjoin(orm.Spawner).order_by(*ordered)
+              users = [ self._user_from_orm(u) for u in users ]
+              running = [ u for u in users if u.running ]
+              for user in users:
+                  auth_state = await user.get_auth_state()
+                  auth_state = auth_state or {}
+                  setattr(user, 'gn', auth_state.get('Givenname', ''))
+                  setattr(user, 'sn', auth_state.get('sn', ''))
+
+              html = self.render_template('admin.html',
+                  user=self.get_current_user(),
+                  admin_access=self.settings.get('admin_access', False),
+                  users=users,
+                  running=running,
+                  sort={s:o for s,o in zip(sorts, orders)},
+              )
+              self.finish(html)
+        c.JupyterHub.extra_handlers = [(r'/admin_orc', OrcAdminHandler),]
+      binder: |
+        from tornado import gen
+        from kubespawner import KubeSpawner
+
+        class BinderSpawner(KubeSpawner):
+          def start(self):
+              # FIXME: ? user can pass any image through API (without using binder) -> add ban list for that?
+              #if not getattr(self, 'launched_images', None):
+              #    self.launched_images = []
+              if 'image' in self.user_options and \
+                 'repo_url' in self.user_options and \
+                 'token' in self.user_options:
+                  # binder service sets the image spec via user options
+                  self.image_spec = self.user_options['image']
+                  self.repo_url = self.user_options['repo_url']
+                  #for i, (li, ru) in enumerate(self.launched_images):
+                  #    if self.image_spec == li:
+                  #        self.launched_images.remove(i)
+                  #self.launched_images.insert(0, (self.image_spec, self.repo_url))
+                  #self.launched_images = self.launched_images[:5]
+
+                  # if binder launch, mount persistent storage differently
+                  volume_name_template = 'volume-{username}{servername}'
+                  self.volume_mounts = [{'mountPath': '/home/jovyan/persistent_storage',
+                                         'name': volume_name_template}]
+
+              self.extra_pod_config.update({'restart_policy': 'Never'})
+              return super().start()
+        c.JupyterHub.spawner_class = BinderSpawner
+
     resources:
       requests:
         cpu: "0.25"
@@ -140,40 +276,62 @@ proxy:
         cpu: "0.5"
         memory: 512Mi
 
-auth:
-  type: custom
-  custom:
-    className: "jhub_shibboleth_auth.shibboleth_auth.ShibbolethAuthenticator"
-  admin:
-    access: true
-    users: ['kenan.erdogan@gesis.org', 'arnim.bleier@gesis.org']
-  state:
-    enabled: true
+  proxy:
+    nodeSelector:
+      staging: worker
+    https:
+      enabled: false
+    service:
+      type: NodePort
+      nodePorts:
+        http: 30180
+    chp:
+      resources:
+        requests:
+          cpu: "0.25"
+          memory: 512Mi
+        limits:
+          cpu: "0.5"
+          memory: 512Mi
 
-singleuser:
-  nodeSelector:
-    user: workers
-  storage:
-    capacity: 15Gi
-  image:
-    name: gesiscss/singleuser-orc
-    tag: "r2d-10858008"
-  cpu:
-    guarantee: 0.1
-    limit: 0.5
-  memory:
-    guarantee: 512M
-    limit: 512M
-  extraEnv:
-    # settings for kernel culling
-    # to be used in binderhub/appendix/extra_notebook_config.py
-    CULL_CONNECTED: '1'
-    CULL_TIMEOUT: '600'
-    CULL_KERNEL_TIMEOUT: '600'
-    CULL_INTERVAL: '60'
-cull:
-  # cull every 11 minutes so it is out of phase
-  every: 660
-  timeout: 600
-  # maxAge is 6 hours: 6 * 3600 = 21600
-  maxAge: 21600
+  auth:
+    type: custom
+    custom:
+      className: "jhub_shibboleth_auth.shibboleth_auth.ShibbolethAuthenticator"
+    admin:
+      access: true
+      users: ['kenan.erdogan@gesis.org', 'arnim.bleier@gesis.org']
+    state:
+      enabled: true
+
+  singleuser:
+    nodeSelector:
+      user: workers
+    cmd: jupyterhub-singleuser
+    storage:
+      type: dynamic
+      capacity: 15Gi
+      #homeMountPath: /home/jovyan/persistent_storage
+    image:
+      name: gesiscss/singleuser-orc
+      tag: "r2d-10858008"
+    cpu:
+      guarantee: 0.1
+      limit: 0.5
+    memory:
+      guarantee: 512M
+      limit: 512M
+    extraEnv:
+      # settings for kernel culling
+      # to be used in binderhub/appendix/extra_notebook_config.py
+      CULL_CONNECTED: '1'
+      CULL_TIMEOUT: '600'
+      CULL_KERNEL_TIMEOUT: '600'
+      CULL_INTERVAL: '60'
+  cull:
+    users: false
+    # cull every 11 minutes so it is out of phase
+    every: 660
+    timeout: 600
+    # maxAge is 6 hours: 6 * 3600 = 21600
+    maxAge: 21600
