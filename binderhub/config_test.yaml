@@ -39,7 +39,8 @@ extraConfig:
         'version': 'beta',
         # 'shibboleth_entityID': f'{site_url}/shibboleth',
         'home_url': '/',
-        'jhub_url': '/jupyter/',
+        'jhub_url': '/hub/',
+        'logout_url': '/hub/logout',
         'gesis_login_url': f'{site_url}/Shibboleth.sso/Login?SAMLDS=1&'
                            f'target={site_url}/hub/login&'
                            f'entityID=https%3A%2F%2Fidp.gesis.org%2Fidp%2Fshibboleth',
@@ -52,6 +53,8 @@ extraConfig:
         'gallery_url': '/gallery/'
         # 'help_url': 'https://www.gesis.org/en/help/',
     }
+    context.update({'user': None})
+    #context.update({'show_jhub_menu': False})
     c.BinderHub.template_variables = context
 
 resources:

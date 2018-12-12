@@ -5,7 +5,7 @@ nodeSelector:
 config:
   BinderHub:
     debug: true
-    base_url: /jupyter/services/binder/
+    base_url: /services/binder/
     hub_url: https://notebooks-test.gesis.org
 
     use_registry: true
@@ -53,7 +53,8 @@ extraConfig:
         'version': 'beta',
         # 'shibboleth_entityID': f'{site_url}/shibboleth',
         'home_url': '/',
-        'jhub_url': '/jupyter/',
+        'jhub_url': '/hub/',
+        'logout_url': '/hub/logout',
         'gesis_login_url': f'{site_url}/Shibboleth.sso/Login?SAMLDS=1&'
                            f'target={site_url}/hub/login&'
                            f'entityID=https%3A%2F%2Fidp.gesis.org%2Fidp%2Fshibboleth',
@@ -67,6 +68,7 @@ extraConfig:
         # 'help_url': 'https://www.gesis.org/en/help/',
     }
     context.update({'user': True})
+    #context.update({'show_jhub_menu': True})
     c.BinderHub.template_variables = context
 
 resources:
@@ -122,7 +124,6 @@ jupyterhub:
     enabled: true
 
   hub:
-    baseUrl: /jupyter/
     nodeSelector:
       staging: worker
     annotations:
@@ -142,7 +143,7 @@ jupyterhub:
       orc: |
         c.Authenticator.shibboleth_logout_url = 'https://notebooks-test.gesis.org/Shibboleth.sso/Logout?return=https://notebooks-test.gesis.org/'
         c.JupyterHub.redirect_to_server = False
-        c.JupyterHub.bind_url = 'https://notebooks-test.gesis.org/jupyter/'
+        c.JupyterHub.bind_url = 'https://notebooks-test.gesis.org/'
       templates: |
         c.JupyterHub.template_paths = ['/srv/jhub_custom_templates']
         staging = True
@@ -155,8 +156,8 @@ jupyterhub:
             # 'shibboleth_entityID': f'{site_url}/shibboleth',
 
             'home_url': '/',
-            'jhub_url': '/jupyter/',
-            # 'logout_url': '/jupyter/hub/logout',
+            'jhub_url': '/hub/',
+            'logout_url': '/hub/logout',
             'gesis_login_url': f'{site_url}/Shibboleth.sso/Login?SAMLDS=1&'
                                f'target={site_url}/hub/login&'
                                f'entityID=https%3A%2F%2Fidp.gesis.org%2Fidp%2Fshibboleth',
@@ -169,6 +170,8 @@ jupyterhub:
             'gallery_url': '/gallery/'
             # 'help_url': 'https://www.gesis.org/en/help/',
         }
+        #context.update({'user': None})
+        #context.update({'show_jhub_menu': True})
         c.JupyterHub.template_vars = context
       admin_handler: |
         from jupyterhub.handlers.base import BaseHandler

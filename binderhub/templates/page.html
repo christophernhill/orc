@@ -58,9 +58,11 @@
     {% include "gesis/header.html" %}
     {% endblock gesis_header %}
 
-    {% block nav_bar %}
-    {% include "gesis/nav.html" %}
-    {% endblock nav_bar %}
+{#    {% block nav_bar %}#}
+{#    {% if show_jhub_menu %}#}
+{#    {% include "gesis/nav.html" %}#}
+{#    {% endif %}#}
+{#    {% endblock nav_bar %}#}
 
     <div id="main-container" class="container">
         {% block headline %}
@@ -87,7 +89,9 @@
 
     {% endblock body %}
 
-    <script src="/static/gesis_nav.js"></script>
+{#    {% if show_jhub_menu %}#}
+{#    <script src="/static/gesis_nav.js"></script>#}
+{#    {% endif %}#}
     {% block extra_js %}
     {% endblock extra_js %}
 </body>

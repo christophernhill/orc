@@ -12,7 +12,7 @@ function IdPSelectUIParms(){
     this.defaultLogoHeight = 100;
     // If non null, then the default place to send users who are not
     // Approaching via the Discovery Protocol for example
-    this.defaultReturn = 'https://notebooks.gesis.org/Shibboleth.sso/Login?SAMLDS=1&target=https://notebooks.gesis.org/jupyter/hub/login';
+    this.defaultReturn = 'https://notebooks.gesis.org/Shibboleth.sso/Login?SAMLDS=1&target=https://notebooks.gesis.org/hub/login';
     //this.defaultReturn = "https://example.org/Shibboleth.sso/DS?SAMLDS=1&target=https://example.org/secure";
     this.defaultReturnIDParam = null;
     this.helpURL = 'https://wiki.shibboleth.net/confluence/display/SHIB2/DSRoadmap';

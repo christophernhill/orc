@@ -1,4 +1,9 @@
 {% extends "page.html" %}
+{# User comes to home only to login #}
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="/static/eds/idpselect.css" />
+{% endblock head %}
 
 {% if production %}
     {% block etracker_et_pagename %}%2FHome%3Ahome%2F{% endblock etracker_et_pagename %}
@@ -20,41 +25,57 @@
         <h3>
             <span id="typed"></span>
         </h3>
-        <a href="{{jhub_url}}" class="btn btn-lg btn-warning orc-button" role="button">Your Server</a>
     </div>
 </div>
 
 <div class="row form-group"></div>
+<div class="row text-center">
+    <div class="col-md-1 col-lg-1 hidden-sm hidden-xs"></div>
+    <div class="col-md-10 col-lg-10 col-sm-12 col-xs-12">
+        <div class="form-group" style="text-align: left; margin-bottom: -15px;">
+            <div style="padding-left: 40px;">
+            <h2>Shibboleth login</h2>
+{#            GESIS Notebooks is currently in <a href="https://www.aai.dfn.de/en/" target="_blank">DFN-AAI Federation</a>.#}
+            GESIS Notebooks is currently in <a href="https://www.aai.dfn.de/en/" target="_blank">DFN-AAI</a>
+            (German Research Network - Authentication and Authorization Infrastructure) Federation.
+            If your institution is part of the DFN-AAI federation, you can use the form below in order to register.
+            </div>
+        </div>
+        <div id="idpSelect" class="form-group"></div>
+        <div class="form-group" style="text-align: left;">
+            <div style="padding-left: 40px;">
+            If you don't have an account from any institution in DFN-AAI or
+            you encounter a problem due to your institution's Shibboleth IdP,
+            you can <a href="{{ gesis_login_url }}" >create a GESIS visitor account</a>.
+            </div>
+        </div>
+    </div>
+    <div class="col-md-1 col-lg-1 hidden-sm hidden-xs"></div>
+</div>
+
 <div class="row form-group"></div>
 
-{#<div class="row form-group page-header">#}
-<div class="row form-group">
-    <div class="col-lg-12 text-center">
-{#    <div class="col-lg-10 col-lg-offset-1">#}
-{#        <div class="text-center">#}
-            <h2>Featured projects</h2>
-{#        </div>#}
-    </div>
-</div>
+{#
+<!-- If you need to care about non javascript browsers you will need to
+   generate a hyperlink to a non-js DS.
 
-<div class="row form-group text-center display-flex">
-  {% for example in binder_examples %}
-  <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4">
-    <div class="thumbnail">
-{#      <img src="..." alt="...">#}
-      <div class="caption">
-        <h3>{{ example.headline }}</h3>
-        {% if example.content %}
-        <p>{{ example.content }}</p>
-        {% endif %}
-        <div><a href="{{ example.binder_link }}" class="btn btn-warning orc-button" role="button">Launch Binder</a>
-           <a href="{{ example.repo_link }}" class="btn btn-info orc-button-info" role="button">Visit Repo</a></div>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
-</div>
+   To build you will need:
+       - URL:  The base URL of the DS you use
+       - EI: Your entityId, URLencoded.  You can get this from the line that
+         this page is called with.
+       - RET: Your return address dlib-adidp.ucs.ed.ac.uk. Again you can get
+         this from the page this is called with, but beware of the
+         target%3Dcookie%253A5269905f bit..
 
+  < href=${URL}?entityID=${EI}&return=${RET}
+-->
+<noscript>
+
+Your Browser does not support javascript. Please use
+<a href="http://federation.org/DS/DS?entityID=https%3A%2F%2FyourentityId.edu.edu%2Fshibboleth&return=https%3A%2F%2Fyourreturn.edu%2FShibboleth.sso%2FDS%3FSAMLDS%3D1%26target%3Dhttps%3A%2F%2Fyourreturn.edu%2F">this link</a>.
+
+</noscript>
+#}
 <div class="row form-group"></div>
 {% endblock main %}
 
@@ -80,4 +101,7 @@
             }
         });
 </script>
+
+<script src="/static/eds/idpselect{% if staging %}_test{% endif %}_config.js" type="text/javascript" language="javascript"></script>
+<script src="/static/eds/idpselect.js" type="text/javascript" language="javascript"></script>
 {% endblock extra_js %}

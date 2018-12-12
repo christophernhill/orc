@@ -10,6 +10,21 @@
                     <div class="navbar-header pull-right visible-xs hidden-sm hidden-md hidden-lg">
                         <ul class="nav nav-pills pull-left ">
                             <li>
+                                {#                          TODO binder logo#}
+                                <a href="{{ bhub_url }}" style="display: inline; padding: 0;">
+                                    <button class="navbar-toggle navbar-link">
+                                        <b aria-hidden="true" class="visible-xs glyphicon glyphicon-question-sign"></b>
+                                    </button>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ gallery_url }}" style="display: inline; padding: 0;">
+                                    <button class="navbar-toggle navbar-link">
+                                        <b aria-hidden="true" class="visible-xs glyphicon glyphicon-book"></b>
+                                    </button>
+                                </a>
+                            </li>
+                            <li>
                                 <a href="{{ about_url }}" style="display: inline; padding: 0;">
                                     <button class="navbar-toggle navbar-link">
                                         <b aria-hidden="true" class="visible-xs glyphicon glyphicon-question-sign"></b>
@@ -20,6 +35,27 @@
                     </div>
                 </div>
                 <div class="navbar-header pull-right hidden-xs">
+                    <ul class="nav navbar-nav pull-left">
+                        <li>
+                            <a href="{{ bhub_url }}">
+                          <span class="top-menu-item hidden-xs">
+{#                          TODO binder logo#}
+                              <span aria-hidden="true" class="glyphicon glyphicon-question-sign"></span>
+                              Binder
+                          </span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav pull-left">
+                        <li>
+                            <a href="{{ gallery_url }}">
+                          <span class="top-menu-item hidden-xs">
+                              <span aria-hidden="true" class="glyphicon glyphicon-book"></span>
+                              Gallery
+                          </span>
+                            </a>
+                        </li>
+                    </ul>
                     <ul class="nav navbar-nav pull-left">
                         <li>
                             <a href="{{ about_url }}">

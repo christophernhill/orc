@@ -26,7 +26,7 @@
                   authType="shibboleth"
                   requireSession="true"
                   redirectToSSL="443">
-                <Path name="/jupyter/hub/login" />
+                <Path name="/hub/login" />
                 <!-- other Path, PathRegex or Query elements here -->
             </Host>
             <!-- other Host or HostRegex elements here -->
@@ -54,8 +54,8 @@
             You can also override entityID on /Login query string, or in RequestMap/htaccess.
             -->
             <SSO discoveryProtocol="SAMLDS"
-                 discoveryURL="https://notebooks.gesis.org/login"
-                 target="https://notebooks.gesis.org/jupyter/hub/login">
+                 discoveryURL="https://notebooks.gesis.org"
+                 target="https://notebooks.gesis.org/hub/login">
                 SAML2 SAML1
             </SSO>
             <!-- NOTE: non-test url: https://wayf.aai.dfn.de/DFN-AAI/wayf/WAYF -->
