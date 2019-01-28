@@ -161,6 +161,13 @@ singleuser:
     user: workers
   storage:
     capacity: 15Gi
+    extraVolumes:
+      - name: etc-jupyter
+        configMap:
+          name: user-etc-jupyter
+    extraVolumeMounts:
+      - name: etc-jupyter
+        mountPath: /etc/jupyter
   image:
     name: gesiscss/singleuser-orc
     tag: "r2d-e1b414e1"

@@ -54,6 +54,10 @@ def deploy(c, password, staging=False, ref='master', mode=''):
             c.run('kubectl apply -f orc_site/deploy/orc-site-app{-test}.yaml '
                   '--namespace=orc{-test}-ns'.format(**format_dict))
         if 'jhubns' in mode or 'jhubtestns' in mode:
+            c.run('kubectl create configmap user-etc-jupyter '
+                  '--from-file=jupyterhub/files/etc/jupyter '
+                  '--namespace=jhub{-test}-ns '
+                  '-o yaml --dry-run | kubectl replace -f -'.format(**format_dict))
             c.run('helm repo update')
             c.run('helm upgrade jhub{-test} jupyterhub/jupyterhub --version=0.8-1591696 '
                   '--install --namespace=jhub{-test}-ns '
