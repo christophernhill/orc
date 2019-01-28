@@ -88,7 +88,7 @@ deploy_staging:
       if git diff HEAD~ --name-only | egrep 'orc_site/deploy/orc-site-app-test.yaml'; then
         mode+="-orctestsite"
       fi;
-      if git diff HEAD~ --name-only | egrep 'jupyterhub/config_test.yaml|jupyterhub/_secret_test.yaml'; then
+      if git diff HEAD~ --name-only | egrep 'jupyterhub/config_test.yaml|jupyterhub/_secret_test.yaml|jupyterhub/files/'; then
         mode+="-jhubtestns"
       fi;
       if git diff HEAD~ --name-only | egrep 'binderhub/config_test.yaml|binderhub/_secret_test.yaml|binderhub/files/'; then
@@ -126,7 +126,7 @@ deploy_prod:
       if git diff HEAD~ --name-only | egrep 'orc_site/deploy/orc-site-app.yaml'; then
         mode+="-orcsite"
       fi;
-      if git diff HEAD~ --name-only | egrep 'jupyterhub/config.yaml|jupyterhub/_secret.yaml'; then
+      if git diff HEAD~ --name-only | egrep 'jupyterhub/config.yaml|jupyterhub/_secret.yaml|jupyterhub/files/'; then
         mode+="-jhubns"
       fi;
       if git diff HEAD~ --name-only | egrep 'binderhub/config.yaml|binderhub/_secret.yaml|binderhub/files/'; then
