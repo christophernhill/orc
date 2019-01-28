@@ -61,11 +61,6 @@ config:
       USER root
       ENV BINDER_URL={binder_url}
       ENV REPO_URL={repo_url}
-      RUN cd /tmp \
-       && wget -q https://github.com/gesiscss/orc/archive/master.tar.gz -O orc.tar.gz \
-       && tar --wildcards -xzf orc.tar.gz --strip 2 */binderhub/appendix\
-       && ./appendix/run-appendix \
-       && rm -rf orc.tar.gz appendix
       USER $NB_USER
 
     template_path: /etc/binderhub/custom/binderhub/templates
@@ -163,9 +158,22 @@ jupyterhub:
     memory:
       guarantee: 1G
       limit: 8G
+    storage:
+      extraVolumes:
+        - name: etc-jupyter
+          configMap:
+            name: user-etc-jupyter
+        - name: etc-jupyter-templates
+          configMap:
+            name: user-etc-jupyter-templates
+      extraVolumeMounts:
+        - name: etc-jupyter
+          mountPath: /etc/jupyter
+        - name: etc-jupyter-templates
+          mountPath: /etc/jupyter/templates
     extraEnv:
       # settings for kernel culling
-      # to be used in binderhub/appendix/extra_notebook_config.py
+      # to be used in binderhub/files/etc/jupyter/jupyter_notebook_config.py
       CULL_CONNECTED: '1'
       CULL_TIMEOUT: '900'
       CULL_KERNEL_TIMEOUT: '900'

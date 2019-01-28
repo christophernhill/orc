@@ -61,6 +61,14 @@ def deploy(c, password, staging=False, ref='master', mode=''):
                   '-f jupyterhub/_secret{_test}.yaml '
                   '--wait --force --debug --timeout=1800'.format(**format_dict))
         if 'bhubns' in mode or 'bhubtestns' in mode:
+            c.run('kubectl create configmap user-etc-jupyter '
+                  '--from-file=binderhub/files/etc/jupyter '
+                  '--namespace=bhub{-test}-ns '
+                  '-o yaml --dry-run | kubectl replace -f -'.format(**format_dict))
+            c.run('kubectl create configmap user-etc-jupyter-templates '
+                  '--from-file=binderhub/files/etc/jupyter/templates '
+                  '--namespace=bhub{-test}-ns '
+                  '-o yaml --dry-run | kubectl replace -f -'.format(**format_dict))
             c.run('helm repo update')
             c.run('helm upgrade bhub{-test} jupyterhub/binderhub --version=0.2.0-6bfd93b '
                   '--install --namespace=bhub{-test}-ns '
