@@ -59,7 +59,7 @@ def deploy(c, password, staging=False, ref='master', mode=''):
                   '--namespace=jhub{-test}-ns '
                   '-o yaml --dry-run | kubectl replace -f -'.format(**format_dict))
             c.run('helm repo update')
-            c.run('helm upgrade jhub{-test} jupyterhub/jupyterhub --version=0.8-1591696 '
+            c.run('helm upgrade jhub{-test} jupyterhub/binderhub --version=0.2.0-b593363 '
                   '--install --namespace=jhub{-test}-ns '
                   '-f jupyterhub/config{_test}.yaml '
                   '-f jupyterhub/_secret{_test}.yaml '
