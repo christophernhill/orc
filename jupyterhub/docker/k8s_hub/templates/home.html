@@ -1,4 +1,11 @@
-{% extends "templates/index.html" %}
+{% extends "templates/home.html" %}
+
+{% block stylesheet %}
+<meta id="base-url" data-url="/jupyter/services/binder/">
+<script src="/jupyter/services/binder/static/dist/bundle.js"></script>
+{{ super() }}
+<link href="/jupyter/services/binder/static/dist/styles.css" rel="stylesheet"/>
+{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -19,32 +26,80 @@
     color: rgb(50,50,50);
     font-weight: normal;
 }
+
+#build-form {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+#default_actions {
+    padding: 5px;
+}
 </style>
 {% endblock extra_css %}
 
+{% block scripts %}
+<script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
+<script src="{{static_url("components/jquery/dist/jquery.min.js") }}" type="text/javascript" charset="utf-8"></script>
+{#<script src="{{static_url("components/bootstrap/dist/js/bootstrap.min.js") }}" type="text/javascript" charset="utf-8"></script>#}
+{% endblock %}
+
 {% block main %}
-  {% block logo %}
-    <div class="row">
-      <div id="logo-container">
-        <img id="logo" src={% block logo_image %}"{{static_url("logo.svg")}}"{% endblock logo_image %} width="390px"  />
-      </div>
+
+<div class="container">
+  {% set state =  user.orm_spawners[''].state %}
+  {% if state %}
+  {% set history =  state.get('history', []) %}
+  {% if history %}
+  <div id="launch_history" class="row">
+    <div class="col-lg-12">
+      <h4>List of launched repos:</h4>
+      <ul class="list-group">
+        {% for e in history %}
+        <li class="list-group-item">
+            {{ e[2] }}: <a href="{{ e[0] }}" target="_blank">{{ e[0] }}</a> ({{ e[1] }})
+            <a role="button" class="btn btn-xs btn-primary common-start" style="float: right;" id="start-{{ e[1] }}" href="#"
+               data-url="{{ e[0] }}" data-ref="{{ e[1] }}">Start</a>
+        </li>
+        {% endfor %}
+      </ul>
     </div>
-  {% endblock logo %}
+  </div>
+  {% endif %}
+  {% endif %}
+  <div id="default_actions" class="row">
+{#    <div class="text-center">#}
+    <div class="col-lg-12">
+      {% if user.running %}  {# server is ready #}
+      <span id="image_spec">
+      Running <a href="{{ user.spawner.repo_url }}" target="_blank">{{ user.spawner.repo_url }}</a> ({{ user.spawner.image.split(':')[-1] }})
+      </span>
+      <a id="stop" role="button" class="btn btn-xs btn-danger">Stop My Server</a>
+      <a id="start" role="button" class="btn btn-xs btn-primary" href="{{ url }}">My Server</a>
+      {% elif user.spawner.pending %}  {# server is pending #}
+      Your server is pending: <a id="start" role="button" class="btn btn-xs btn-primary" href="{{ url }}">My Server</a>
+{#      <a id="stop" role="button" class="btn btn-xs btn-danger">Stop it</a>#}
+      {% else %}
+      {# {% if not user.active %}  {# server is not ready or pending #}
+      <a id="start" role="button" class="btn btn-xs btn-primary" href="{{ url }}">Start My Server</a> with <a href="https://github.com/gesiscss/data_science_image" target="_blank">the default image</a>
+      {% endif %}
+    </div>
+  </div>
+{#  {% if user.spawner.launched_images %}#}
+{#  <h4>This list is not persistent</h4>#}
+{#  {% for i, r in user.spawner.launched_images %}#}
+{#  <div class="row col-lg-12"><a href="{{ r }}">{{ r }}</a>: {{ i.split(':')[-1] }}</div>#}
+{#  {% endfor %}#}
+{#  {% endif %}#}
+</div>
+
+<div id="main" class="container">
+  <div class="row form-group"></div>
   <div class="row">
-    <h4 class="text-center logo-subtext">(beta)</h4>
 {#    <div class="col-lg-10 col-lg-offset-1">#}
     <div class="col-lg-12">
-      {% block header %}
-      <div id="header" class="text-center">
-{#        <h3>Turn a Git repo into a collection of interactive notebooks</h3>#}
-        <div id="explanation">
-          Have a repository full of Jupyter notebooks? With Binder, open those notebooks in an executable environment, making your code immediately reproducible by anyone, anywhere.
-        </div>
-      </div>
-      {% endblock header %}
-
-      {% block form %}
-      <form id="build-form" class="form jumbotron">
+    {% block binder_form %}
+    <form id="build-form" class="form jumbotron">
         <h4 id="form-header" class='row'>Build and launch a repository</h4>
         <input type="hidden" id="provider_prefix" value="gh"/>
         <div class="form-group row">
@@ -73,7 +128,7 @@
         <div class="form-row row">
           <div class="form-group col-md-4">
             <label for="ref">Git branch, tag, or commit</label>
-            <input class="form-control" type="text" id="ref" placeholder="master"/>
+            <input class="form-control" type="text" id="ref" placeholder="master" value="master" readonly/>
           </div>
           <div class="form-group col-md-6">
             <label for="filepath"></label>
@@ -107,19 +162,19 @@
         </div>
 
         <!--url section-->
-        <div class="url row">
+        <div class="url row" style="display: none;">
             <div class="dropdownmenu">
               <label>Copy the URL below and share your Binder with others:</label>
             </div>
             <div class="url-row">
               <pre id="basic-url-snippet" data-default="Fill in the fields to see a URL for sharing your Binder."></pre>
-              <img class="icon clipboard" src="{{static_url("images/copy-icon-black.svg")}}" data-clipboard-target="#basic-url-snippet" alt="Copy to clipboard">
+              <img class="icon clipboard" src="/jupyter/services/binder/static/images/copy-icon-black.svg" data-clipboard-target="#basic-url-snippet" alt="Copy to clipboard">
             </div>
         </div>
 
-        <div class="badges row">
+        <div class="badges row" style="display: none;">
             <div class="dropdownmenu" id="toggle-badge-snippet">
-              <label>Copy the text below, then paste into your README to show a binder badge: <img id="badge" src="{{static_url("images/badge_logo.svg")}}"></label>
+              <label>Copy the text below, then paste into your README to show a binder badge: <img id="badge" src="/jupyter/services/binder/static/images/badge_logo.svg"></label>
               <a id="badge-link"></a>
               <a href="#" title="show badge snippets"><span id="badge-snippet-caret" class="glyphicon glyphicon-triangle-right"></span></a>
             </div>
@@ -127,17 +182,17 @@
               <!--Markdown section-->
               <div  class="badge-snippet-row">
                  <pre id="markdown-badge-snippet" data-default="Fill in the fields to see the markdown badge snippet."></pre>
-                 <img class="icon" src="{{static_url("images/markdown-icon.svg")}}">
+                 <img class="icon" src="/jupyter/services/binder/static/images/markdown-icon.svg">
                  <img class="icon clipboard"
-                    src="{{static_url("images/copy-icon-black.svg")}}"
+                    src="/jupyter/services/binder/static/images/copy-icon-black.svg"
                     data-clipboard-target="#markdown-badge-snippet"
                     alt="Copy markdown link to clipboard">
               </div>
               <!--RST section-->
               <div  class="badge-snippet-row">
                   <pre id="rst-badge-snippet" data-default="Fill in the fields to see the rST badge snippet."></pre>
-                  <img class="icon" src="{{static_url("images/rst-icon.svg")}}">
-                  <img class="icon clipboard" src="{{static_url("images/copy-icon-black.svg")}}"
+                  <img class="icon" src="/jupyter/services/binder/static/images/rst-icon.svg">
+                  <img class="icon clipboard" src="/jupyter/services/binder/static/images/copy-icon-black.svg"
                     data-clipboard-target="#rst-badge-snippet"
                     alt="Copy rst link to clipboard">
               </div>
@@ -175,43 +230,37 @@
           </div>
         </div>
       </form>
-      {% endblock form %}
+    {% endblock binder_form %}
     </div>
   </div>
-  {% block how_it_works %}
-  <div id="how-it-works">
-    <h3 class="text-center">How it works</h3>
-
-    <div class="row">
-      <div class="col-md-1 col-md-offset-2 point-container">
-        <span class="point point-orange">1</span>
-      </div>
-      <div class="col-md-7 front">
-        <span class="front-em">Enter your repository information</span><br />Provide in the above form a URL or a GitHub repository that contains Jupyter notebooks, as well as a branch, tag, or commit hash. Launch will build your Binder repository. If you specify a path to a notebook file, the notebook will be opened in your browser after building.
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-1 col-md-offset-2 point-container">
-        <span class="point point-red">2</span>
-      </div>
-      <div class="col-md-7 front">
-        <span class="front-em">We build a Docker image of your repository</span><br />Binder will search for a dependency file, such as requirements.txt or environment.yml, in the repository's root directory (<a href="http://mybinder.readthedocs.io/en/latest/using.html#preparing-a-repository-for-binder">more details on more complex dependencies in documentation</a>). The dependency files will be used to build a Docker image. If an image has already been built for the given repository, it will not be rebuilt. If a new commit has been made, the image will automatically be rebuilt.
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-1 col-md-offset-2 point-container">
-        <span class="point point-blue">3</span>
-      </div>
-      <div class="col-md-7 front">
-        <span class="front-em">Interact with your notebooks in a live environment!</span><br />A <a href="https://jupyterhub.readthedocs.io/en/latest/">JupyterHub</a> server will host your repository's contents. We offer you a reusable link and badge to your live repository that you can easily share with others.
-      </div>
-    </div>
-  </div>
-  {% endblock how_it_works %}
-
-<div class="row text-center">
-  <h3>questions?<br />join the <a href="https://gitter.im/jupyterhub/binder">Binder chat</a>, read the <a href="https://mybinder.readthedocs.io/en/latest/">Binder docs</a>{#, see the <a href="https://github.com/jupyterhub/binderhub">code</a>#}</h3>
 </div>
-{% endblock main %}
+
+{% endblock %}
+
+{% block script %}
+
+{{ super() }}
+
+<script type="text/javascript">
+// initialize binder form
+indexMain();
+</script>
+
+<script type="text/javascript">
+// hide "Start my Server" button
+$( "#stop" ).click(function() {
+  $("#start").hide();
+  $("#image_spec").hide();
+});
+
+$('.common-start').click(function(e) {
+    e.preventDefault();
+    $('#repository').val($(this).data().url);
+    $('#ref').val($(this).data().ref);
+    $('#filepath').val('');
+    //$('form#build-form').trigger('submit');
+    $('button#submit').trigger('click');
+    return false;
+});
+</script>
+{% endblock %}
