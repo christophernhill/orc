@@ -125,7 +125,7 @@ jupyterhub:
       staging: worker
     image:
       name: gesiscss/k8s-hub-orc
-      tag: "8116620"
+      tag: "af0da7b8"
     deploymentStrategy:
       type: RollingUpdate
     db:
