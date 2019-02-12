@@ -46,52 +46,43 @@
 
 {% block main %}
 
+{% set state =  user.orm_spawners[''].state %}
+{% if state %}
+{% set history =  state.get('history', []) %}
+{% if history %}
 <div class="container">
-  {% set state =  user.orm_spawners[''].state %}
-  {% if state %}
-  {% set history =  state.get('history', []) %}
-  {% if history %}
   <div id="launch_history" class="row">
     <div class="col-lg-12">
-      <h4>List of launched repos:</h4>
+      <h4>History</h4>
       <ul class="list-group">
         {% for e in history %}
         <li class="list-group-item">
             {{ e[2] }}: <a href="{{ e[0] }}" target="_blank">{{ e[0] }}</a> ({{ e[1] }})
-            <a role="button" class="btn btn-xs btn-primary common-start" style="float: right;" id="start-{{ e[1] }}" href="#"
-               data-url="{{ e[0] }}" data-ref="{{ e[1] }}">Start</a>
+            {% if (user.running or user.spawner.pending) and loop.index == loop.length %}
+            {# last element in history is currently running, add Stop button for it #}
+            <a id="stop" role="button" class="btn btn-xs btn-danger">Stop</a>
+            {% endif %}
+
+            {# add Start button for each element, if user has no server running #}
+            {# if last element is running, hide Start buttons of all other elements #}
+            <a role="button"
+               class="btn btn-xs btn-primary common-start{% if (user.running or user.spawner.pending) and (loop.index != loop.length) %} hidden{% endif %}"
+               style="float: right;" id="start-{{ e[1] }}" href="#" data-url="{{ e[0] }}" data-ref="{{ e[1] }}">
+                {% if user.running or user.spawner.pending %}
+                    {# if last element is running, change its text #}
+                    {% if loop.index == loop.length %}My Server{% else %}Start{% endif %}
+                {% else %}
+                Start
+                {% endif %}
+            </a>
         </li>
         {% endfor %}
       </ul>
     </div>
   </div>
-  {% endif %}
-  {% endif %}
-  <div id="default_actions" class="row">
-{#    <div class="text-center">#}
-    <div class="col-lg-12">
-      {% if user.running %}  {# server is ready #}
-      <span id="image_spec">
-      Running <a href="{{ user.spawner.repo_url }}" target="_blank">{{ user.spawner.repo_url }}</a> ({{ user.spawner.image.split(':')[-1] }})
-      </span>
-      <a id="stop" role="button" class="btn btn-xs btn-danger">Stop My Server</a>
-      <a id="start" role="button" class="btn btn-xs btn-primary" href="{{ url }}">My Server</a>
-      {% elif user.spawner.pending %}  {# server is pending #}
-      Your server is pending: <a id="start" role="button" class="btn btn-xs btn-primary" href="{{ url }}">My Server</a>
-{#      <a id="stop" role="button" class="btn btn-xs btn-danger">Stop it</a>#}
-      {% else %}
-      {# {% if not user.active %}  {# server is not ready or pending #}
-      <a id="start" role="button" class="btn btn-xs btn-primary" href="{{ url }}">Start My Server</a> with <a href="https://github.com/gesiscss/data_science_image" target="_blank">the default image</a>
-      {% endif %}
-    </div>
-  </div>
-{#  {% if user.spawner.launched_images %}#}
-{#  <h4>This list is not persistent</h4>#}
-{#  {% for i, r in user.spawner.launched_images %}#}
-{#  <div class="row col-lg-12"><a href="{{ r }}">{{ r }}</a>: {{ i.split(':')[-1] }}</div>#}
-{#  {% endfor %}#}
-{#  {% endif %}#}
 </div>
+{% endif %}
+{% endif %}
 
 <div id="main" class="container">
   <div class="row form-group"></div>
@@ -247,19 +238,21 @@ indexMain();
 </script>
 
 <script type="text/javascript">
-// hide "Start my Server" button
-$( "#stop" ).click(function() {
-  $("#start").hide();
-  $("#image_spec").hide();
+
+$('#stop').click(function() {
+    // change text from "My Server" to "Start" and make all Start buttons visible
+    $('.common-start').text('Start').removeClass('hidden');
 });
 
 $('.common-start').click(function(e) {
     e.preventDefault();
+    // fill the binder form with values of selected repo and submit
     $('#repository').val($(this).data().url);
     $('#ref').val($(this).data().ref);
     $('#filepath').val('');
-    //$('form#build-form').trigger('submit');
     $('button#submit').trigger('click');
+    // hide all start buttons
+    $('.common-start').addClass('hidden');
     return false;
 });
 </script>
