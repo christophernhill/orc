@@ -125,7 +125,7 @@ jupyterhub:
       staging: worker
     image:
       name: gesiscss/k8s-hub-orc
-      tag: "34c6bb1"
+      tag: "9240c9e"
     deploymentStrategy:
       type: RollingUpdate
     db:
@@ -281,7 +281,7 @@ jupyterhub:
           def get_state(self):
             state_ = self.orm_spawner.state
             # default default_list is only to use when first login
-            default_list = ['https://github.com/gesiscss/data_science_image', 'master', '']
+            default_list = [['https://github.com/gesiscss/data_science_image', 'master', 'never']]
             history = state_.get('history', default_list) if state_ else default_list
             state = super().get_state()
             state['history'] = history
@@ -294,6 +294,8 @@ jupyterhub:
                   history_.append(h)
               history_.append(e)
               state['history'] = history_[-10:]  # save last 10 launched images
+            if not state['history']:
+              state['history'] = default_list
             return state
         c.JupyterHub.spawner_class = BinderSpawner
 

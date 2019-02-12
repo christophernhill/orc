@@ -32,7 +32,7 @@
     padding-bottom: 10px;
 }
 
-#default_actions {
+#launch_history {
     padding: 5px;
 }
 </style>
@@ -46,7 +46,7 @@
 
 {% block main %}
 
-{% set state =  user.orm_spawners[''].state %}
+{% set state = user.spawner.get_state() %}
 {% if state %}
 {% set history =  state.get('history', []) %}
 {% if history %}
@@ -67,10 +67,12 @@
             {# if last element is running, hide Start buttons of all other elements #}
             <a role="button"
                class="btn btn-xs btn-primary common-start{% if (user.running or user.spawner.pending) and (loop.index != loop.length) %} hidden{% endif %}"
-               style="float: right;" id="start-{{ e[1] }}" href="#" data-url="{{ e[0] }}" data-ref="{{ e[1] }}">
-                {% if user.running or user.spawner.pending %}
-                    {# if last element is running, change its text #}
-                    {% if loop.index == loop.length %}My Server{% else %}Start{% endif %}
+               style="float: right;" id="start-{{ e[1] }}"
+               href="{% if (user.running or user.spawner.pending) and (loop.index == loop.length) %}{{ url }}{% else %}#{% endif %}"
+               data-url="{{ e[0] }}" data-ref="{{ e[1] }}">
+                {% if (user.running or user.spawner.pending) and (loop.index == loop.length) %}
+                {# if last element is running, change its text #}
+                My Server
                 {% else %}
                 Start
                 {% endif %}
@@ -241,19 +243,22 @@ indexMain();
 
 $('#stop').click(function() {
     // change text from "My Server" to "Start" and make all Start buttons visible
-    $('.common-start').text('Start').removeClass('hidden');
+    $('.common-start').attr('href', '#').text('Start').removeClass('hidden');
+    $(this).text('Stopping');
 });
 
 $('.common-start').click(function(e) {
-    e.preventDefault();
-    // fill the binder form with values of selected repo and submit
-    $('#repository').val($(this).data().url);
-    $('#ref').val($(this).data().ref);
-    $('#filepath').val('');
-    $('button#submit').trigger('click');
-    // hide all start buttons
-    $('.common-start').addClass('hidden');
-    return false;
+    if ($(this).attr('href') === '#') {
+        e.preventDefault();
+        // fill the binder form with values of selected repo and submit
+        $('#repository').val($(this).data().url);
+        $('#ref').val($(this).data().ref);
+        $('#filepath').val('');
+        $('button#submit').trigger('click');
+        // hide all start buttons
+        $('.common-start').addClass('hidden');
+        return false;
+    }
 });
 </script>
 {% endblock %}
