@@ -31,10 +31,6 @@
     padding-top: 10px;
     padding-bottom: 10px;
 }
-
-#launch_history {
-    padding: 5px;
-}
 </style>
 {% endblock extra_css %}
 
@@ -51,7 +47,7 @@
 {% set history =  state.get('history', []) %}
 {% if history %}
 <div class="container">
-  <div id="launch_history" class="row">
+  <div id="launch_history">
     <h4>Your Projects</h4>
     <div class="table-responsive">
      <table class="table table-striped">
@@ -68,8 +64,8 @@
             {% for e in history %}
                 <tr>
 {#                    <td>{{ e[0].rstrip('/').split('/')[-1] }}</td>#}
-                    <td><a href="{{ e[0] }}" target="_blank" id="repo-url-{{ e[1] }}">{{ e[0].rstrip('/').split('/')[-1] }}</a></td>
-                    <td>{{ e[1] }}</td>
+                    <td><a href="{{ e[0] }}" target="_blank">{{ '/'.join(e[0].rstrip('/').split('://', 1)[-1].split('/', 2)[-2:]) }}</a></td>
+                    <td>{{ e[1][:7] }}</td>
                     <td>{{ e[2] }}</td>
                     <td>
                         {% if (user.running or user.spawner.pending) and loop.index == loop.length %}
@@ -90,6 +86,8 @@
                            Start
                            {% endif %}
                         </a>
+                        {# TODO add custom jupyterhub handler to delete rep from history and disk. it should redirect back to jhub home. #}
+                        <a id="delete-repo" href="#" title="Delete from history and disk"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
                      </td>
                 </tr>
             {% endfor %}
@@ -266,6 +264,7 @@ $('#stop').click(function() {
 $('.common-start').click(function(e) {
     if ($(this).attr('href') === '#') {
         e.preventDefault();
+        $("#build-form").get(0).scrollIntoView();
         // fill the binder form with values of selected repo and submit
         $('#repository').val($(this).data().url);
         $('#ref').val($(this).data().ref);
