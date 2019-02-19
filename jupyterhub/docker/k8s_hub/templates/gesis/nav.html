@@ -25,7 +25,7 @@
                                 <li><a href="{{ base_url }}home">Home</a></li>
                                 <li><a href="{{ base_url }}token">Token</a></li>
                                 {% if user.admin %}
-                                    <li><a href="{{ base_url }}admin_orc">Admin</a></li>{% endif %}
+                                    <li><a href="{{ base_url }}admin">Admin</a></li>{% endif %}
                                 {#<li><a href="{% if user %}{{logout_url}}{% else %}{{login_url}}{% endif %}">{% if user %}Logout{% else %}Login{% endif %}</a></li>#}
                                 <li><a href="{{ logout_url }}">Logout</a></li>
                             </ul>

@@ -52,10 +52,7 @@ spec:
         staging: worker
       containers:
       - name: nginx-shibboleth-test
-        image: gesiscss/nginx-shibboleth-orc:c81f03fe
-        # https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#run-a-command-in-a-shell
-        command: ["/bin/sh"]
-        args: ["-c", "cp /etc/shibboleth-conf/* /etc/shibboleth/ && /usr/bin/supervisord --nodaemon --configuration /etc/supervisor/supervisord.conf"]
+        image: nginx:1.13.6
         resources:
           requests:
             cpu: "0.5"
@@ -64,23 +61,12 @@ spec:
             cpu: "1"
             memory: "2Gi"
         volumeMounts:
-        - name: shibboleth-sp-conf
-          mountPath: /etc/shibboleth-conf
-        - name: shibboleth-sp-tls
-          mountPath: "/etc/shibboleth/tls"
-          readOnly: true
         - name: nginx-conf
           mountPath: /etc/nginx/conf.d
         - name: letsencrypt-volume
           mountPath: "/etc/letsencrypt_volume"
           readOnly: true
       volumes:
-      - name: shibboleth-sp-conf
-        configMap:
-          name: shibboleth-configmap
-      - name: shibboleth-sp-tls
-        secret:
-          secretName: shibboleth-sp-tls-secret
       - name: nginx-conf
         configMap:
           name: nginx-configmap

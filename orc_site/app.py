@@ -61,12 +61,6 @@ def home():
     return render_template('home.html', **context)
 
 
-@app.route('/login/')
-def login():
-    context.update({'active': 'jupyterhub'})
-    return render_template('shibboleth_login.html', **context)
-
-
 @app.route('/about/')
 def about():
     context.update({'active': 'about'})
